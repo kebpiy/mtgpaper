@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import pickle
 
 import cv2
@@ -9,6 +10,10 @@ from wofi import Wofi
 
 SCRYFALL_URL = "https://api.scryfall.com/"
 picker = Wofi()
+
+# adding this ensures relative paths resolve correctly
+script_dir = os.path.dirname(os.path.realpath(__file__))
+os.chdir(script_dir)
 
 
 def pick_color() -> str | None:
@@ -57,7 +62,7 @@ def main():
 
     # make the request, and save images to files
     cv_imgs = []
-    for i in range(8):
+    for i in range(10):
         r = requests.get(SCRYFALL_URL + "cards/random", params=payload)
         with open(f"./images/card{i}", "wb") as f:
             f.write(r.content)
@@ -68,14 +73,16 @@ def main():
     height, width = cv_imgs[0].shape[:2]
     cv_imgs = [cv2.resize(img, (width, height)) for img in cv_imgs]
 
-    row1 = np.hstack(cv_imgs[0:4])
-    row2 = np.hstack(cv_imgs[4:8])
+    row1 = np.hstack(cv_imgs[0:5])
+    row2 = np.hstack(cv_imgs[5:10])
 
     grid = np.vstack((row1, row2))
 
-    cv2.imwrite("./images/output.jpg", grid)
+    cv2.imwrite("./images/grid.jpg", grid)
 
-    # image now generated in ./images
+    # set the wallpaper with hyprctl
+    os.system("mv ./images/grid.jpg ~/Wallpapers/wallpaper.jpg")
+    os.system('hyprctl hyprpaper reload , contain:"~/Wallpapers/wallpaper.jpg"')
 
 
 if __name__ == "__main__":
