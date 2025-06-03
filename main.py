@@ -44,6 +44,17 @@ def pick_set() -> str:
     return list(sets.keys())[index]
 
 
+def pick_monitor() -> bool:
+    monitors = ["Main", "Left"]
+    index, _ = picker.select("Which monitor?", monitors)
+    match index:
+        case 0:
+            return True
+        case 1:
+            return False
+    return True
+
+
 def main():
     # enter a color you want all cards to contain
     chosen_color = pick_color()
@@ -96,9 +107,19 @@ def main():
 
     cv2.imwrite("./images/grid.jpg", grid)
 
-    # set the wallpaper with hyprctl
-    os.system("mv ./images/grid.jpg ~/Wallpapers/wallpaper.jpg")
-    os.system('hyprctl hyprpaper reload , contain:"~/Wallpapers/wallpaper.jpg"')
+    # set Main monitor wallpaper
+    if pick_monitor():
+        os.system("mv ./images/grid.jpg ~/Wallpapers/wallpaperMain.jpg")
+        os.system(
+            'hyprctl hyprpaper reload DP-1, contain:"~/Wallpapers/wallpaperMain.jpg"'
+        )
+
+    # set Side monitor wallpaper
+    else:
+        os.system("mv ./images/grid.jpg ~/Wallpapers/wallpaperSide.jpg")
+        os.system(
+            'hyprctl hyprpaper reload DP-2, contain:"~/Wallpapers/wallpaperSide.jpg"'
+        )
 
 
 if __name__ == "__main__":
