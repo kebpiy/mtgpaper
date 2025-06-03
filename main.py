@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import os
 import pickle
 
@@ -58,15 +59,30 @@ def main():
     if set_color:
         query += f" c:{chosen_color}"
 
-    payload = {"q": query, "format": "image", "version": "border_crop"}
+    json_file_payload = {"q": query}
 
-    # make the request, and save images to files
+    # store list of unique image ids
+    img_ids = []
+    while len(img_ids) < 10:
+        r = requests.get(SCRYFALL_URL + "cards/random", params=json_file_payload)
+        r_obj = json.loads(r.content)
+        if r_obj["object"] == "error":
+            print("Cannot pull cards from this set, choose another.")
+            os._exit(1)
+        if r_obj["id"] not in img_ids:
+            img_ids.append(r_obj["id"])
+
+    # Get border crop images for all unique cards in img_ids
     cv_imgs = []
-    for i in range(10):
-        r = requests.get(SCRYFALL_URL + "cards/random", params=payload)
-        with open(f"./images/card{i}", "wb") as f:
+    for i in range(len(img_ids)):
+        image_file_payload = {"format": "image", "version": "border_crop"}
+        r = requests.get(
+            SCRYFALL_URL + f"cards/{img_ids[i]}", params=image_file_payload
+        )
+        filename = f"./images/card{i}"
+        with open(filename, "wb") as f:
             f.write(r.content)
-        cv_imgs.append(cv2.imread(f"./images/card{i}"))
+        cv_imgs.append(cv2.imread(filename))
 
     if any(img is None for img in cv_imgs):
         raise ValueError("One or more images failed to load")
